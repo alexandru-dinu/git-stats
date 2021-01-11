@@ -15,21 +15,21 @@ def _get_gh(token: Path) -> Github:
 def list_all_repos(args) -> None:
     gh = _get_gh(Path(args.token))
 
-    attrs = ['name', 'created_at', 'fork', 'git_url']
+    attrs = ['name', 'updated_at', 'fork', 'git_url']
     Repo = namedtuple('Repo', attrs)
 
     data = []
     for repo in gh.get_user().get_repos():
         data.append(Repo(*[getattr(repo, attr) for attr in attrs]))
 
-    data = sorted(data, key=lambda r: r.created_at)
+    data = sorted(data, key=lambda r: r.updated_at)
     data = filter(lambda r: args.org in r.git_url, data)
 
     if args.fork_only:
         data = filter(lambda r: r.fork, data)
 
     for repo in data:
-        s = f'{repo.name:40s} @ {str(repo.created_at):20s}'
+        s = f'{repo.name:40s} @ {str(repo.updated_at):20s}'
         if repo.fork:
             s += ' (fork)'
         print(s)
