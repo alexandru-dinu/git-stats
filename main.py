@@ -1,39 +1,53 @@
-import github
 import argparse
-import os
-from datetime import datetime
+from pathlib import Path
+from collections import namedtuple
 
-import json
-from pprint import pprint
+from github import Github
 
-KEYS = ['forks_count', 'open_issues_count', 'stargazers_count', 'subscribers_count', 'watchers_count']
 
-def collect(args):
-    gh = github.GitHub(access_token=args.token)
-    repo = gh.repos(args.org, args.repo)
-    repo_info = repo.get()
+def _get_gh(token: Path) -> Github:
+    with open(token, 'rt') as fp:
+        tk = fp.read().strip()
 
-    stats = {k: repo_info[k] for k in KEYS}
-    traffic = repo.traffic.views.get()
+    return Github(tk)
 
-    data = {**stats, **traffic}
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    os.makedirs(args.dir, exist_ok=True)
+def list_all_repos(args) -> None:
+    gh = _get_gh(Path(args.token))
 
-    fp = open(os.path.join(args.dir, f'{args.org}@{args.repo}@{timestamp}.json'), 'wt')
-    json.dump(data, fp)
-    fp.close()
+    attrs = ['name', 'created_at', 'fork', 'git_url']
+    Repo = namedtuple('Repo', attrs)
+
+    data = []
+    for repo in gh.get_user().get_repos():
+        data.append(Repo(*[getattr(repo, attr) for attr in attrs]))
+
+    data = sorted(data, key=lambda r: r.created_at)
+    data = filter(lambda r: args.org in r.git_url, data)
+
+    if args.fork_only:
+        data = filter(lambda r: r.fork, data)
+
+    for repo in data:
+        s = f'{repo.name:40s} @ {str(repo.created_at):20s}'
+        if repo.fork:
+            s += ' (fork)'
+        print(s)
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--org', type=str, required=True)
-    parser.add_argument('--repo', type=str, required=True)
-    parser.add_argument('--token', type=str, required=True)
-    parser.add_argument('--dir', type=str, default='history')
+
+    parser.add_argument('--token', type=str, required=True,
+            help='Path to a file containing GitHub access token.')
+    parser.add_argument('--org', type=str, required=False,
+            help='Username or organization.')
+    parser.add_argument('--fork_only', action='store_true',
+            help='Inspect only forks.')
+
     args = parser.parse_args()
 
-    collect(args)
+    list_all_repos(args)
 
 
 if __name__ == "__main__":
