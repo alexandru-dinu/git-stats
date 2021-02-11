@@ -6,7 +6,7 @@ from github import Github
 
 
 def _get_gh(token: Path) -> Github:
-    with open(token, 'rt') as fp:
+    with open(token, "rt") as fp:
         tk = fp.read().strip()
 
     return Github(tk)
@@ -15,8 +15,8 @@ def _get_gh(token: Path) -> Github:
 def list_all_repos(args) -> None:
     gh = _get_gh(Path(args.token))
 
-    attrs = ['name', 'updated_at', 'fork', 'git_url']
-    Repo = namedtuple('Repo', attrs)
+    attrs = ["name", "updated_at", "fork", "git_url"]
+    Repo = namedtuple("Repo", attrs)
 
     data = []
     for repo in gh.get_user().get_repos():
@@ -29,21 +29,25 @@ def list_all_repos(args) -> None:
         data = filter(lambda r: r.fork, data)
 
     for repo in data:
-        s = f'{repo.name:40s} @ {str(repo.updated_at):20s}'
+        s = f"{repo.name:40s} @ {str(repo.updated_at):20s}"
         if repo.fork:
-            s += ' (fork)'
+            s += " (fork)"
         print(s)
 
 
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--token', type=str, required=True,
-            help='Path to a file containing GitHub access token.')
-    parser.add_argument('--org', type=str, required=False,
-            help='Username or organization.')
-    parser.add_argument('--fork_only', action='store_true',
-            help='Inspect only forks.')
+    parser.add_argument(
+        "--token",
+        type=str,
+        required=True,
+        help="Path to a file containing GitHub access token.",
+    )
+    parser.add_argument(
+        "--org", type=str, required=False, help="Username or organization."
+    )
+    parser.add_argument("--fork_only", action="store_true", help="Inspect only forks.")
 
     args = parser.parse_args()
 

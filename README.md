@@ -1,5 +1,7 @@
 # GitHub statistics
 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 Simple script using [PyGithub](https://pygithub.readthedocs.io/en/latest/introduction.html#) to fetch statistics about the repositories of an user or an organization.
 
 
